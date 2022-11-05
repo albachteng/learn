@@ -9,20 +9,24 @@ func Sum(nums []int) int {
 }
 
 func SumAll(arrs ...[]int) []int {
-  var sums []int
+	var sums []int
 
-  for _, arr := range arrs {
-    sums = append(sums, Sum(arr))
-  }
-  return sums
+	for _, arr := range arrs {
+		sums = append(sums, Sum(arr))
+	}
+	return sums
 }
 
 func SumAllTails(arrs ...[]int) []int {
-  var sums []int
+	var sums []int
 
-  for _, arr := range arrs {
-    tail := arr[1:]
-    sums = append(sums, Sum(tail))
-  }
-  return sums;
+	for _, arr := range arrs {
+		if len(arr) == 0 {
+			sums = append(sums, 0)
+		} else {
+			tail := arr[1:]
+			sums = append(sums, Sum(tail))
+		}
+	}
+	return sums
 }
