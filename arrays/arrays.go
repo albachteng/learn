@@ -16,3 +16,13 @@ func SumAll(arrs ...[]int) []int {
   }
   return sums
 }
+
+func SumAllTails(arrs ...[]int) []int {
+  var sums []int
+
+  for _, arr := range arrs {
+    tail := arr[1:]
+    sums = append(sums, Sum(tail))
+  }
+  return sums;
+}
