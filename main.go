@@ -4,8 +4,13 @@ import (
 	"fmt"
 )
 
+const englishGreeting = "Hello, "
+
 func Hello(name string) string {
-	return "Hello, " + name
+  if name == "" {
+    name = "World"
+  }
+	return englishGreeting + name
 }
 
 func main() {
