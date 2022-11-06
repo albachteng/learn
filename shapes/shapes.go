@@ -39,6 +39,7 @@ func (t Triangle) Area() float64 {
   return .5 * t.Base * t.Height
 }
 
+// assumes the apex is within the bounds of the base
 func (t Triangle) Perimeter() float64 {
-  return 0.0
+  return t.Base + math.Sqrt(t.Base * t.Base + 4 * t.Height * t.Height)
 }

@@ -18,7 +18,7 @@ func TestPerimeter(t *testing.T) {
   }{
     {name: "Rectangle", shape: Rectangle{10, 10}, hasPerimeter: 40.0},
     {name: "Circle", shape: Circle{5}, hasPerimeter: 31.41592653589793},
-    {name: "Triangle", shape: Triangle{10, 10}, hasPerimeter: 0.0},
+    {name: "Triangle", shape: Triangle{3, 4}, hasPerimeter: 11.54400374531753},
   }
   for _, tt := range perimeterTests {
     t.Run(tt.name, func(t *testing.T) {
