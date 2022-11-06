@@ -2,36 +2,49 @@ package shapes
 
 import "testing"
 
-func assert(t testing.TB, got, want float64) {
+func assert(t testing.TB, s Shape, got, want float64) {
   t.Helper()
   if got != want {
-    t.Errorf("got %g, want %g", got, want)
+    t.Errorf("%#v: got %g, want %g", s, got, want)
   }
 }
 
 func TestPerimeter(t *testing.T) {
-  t.Run("rectangle perimeter", func(t *testing.T) {
-    r := Rectangle{10, 10}
-    got := r.Perimeter()
-    want := 40.0
 
-    assert(t, got, want)
-  })
+  perimeterTests := []struct {
+    name string
+    shape Shape
+    hasPerimeter float64
+  }{
+    {name: "Rectangle", shape: Rectangle{10, 10}, hasPerimeter: 40.0},
+    {name: "Circle", shape: Circle{5}, hasPerimeter: 31.41592653589793},
+    {name: "Triangle", shape: Triangle{10, 10}, hasPerimeter: 0.0},
+  }
+  for _, tt := range perimeterTests {
+    t.Run(tt.name, func(t *testing.T) {
+      got := tt.shape.Perimeter()
+      assert(t, tt.shape, got, tt.hasPerimeter)
+    })
+  }
 }
 
 func TestArea(t *testing.T) {
 
   areaTests := []struct {
+    name string
     shape Shape
-    want float64
+    hasArea float64
   }{
-    {Rectangle{12, 6}, 72.0},
-    {Circle{10}, 314.1592653589793},
+    {name: "Rectangle", shape: Rectangle{12, 6}, hasArea: 72.0},
+    {name: "Circle", shape: Circle{10}, hasArea: 314.1592653589793},
+    {name: "Triangle", shape: Triangle{5, 10}, hasArea: 25.0},
   }
 
   for _, tt := range areaTests {
-    got := tt.shape.Area()
-    assert(t, got, tt.want)
+    t.Run(tt.name, func(t *testing.T) {
+      got := tt.shape.Area()
+      assert(t, tt.shape, got, tt.hasArea)
+    })
   }
 
 }
