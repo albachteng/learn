@@ -2,6 +2,8 @@ package tree
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 )
 
 var ErrorNotFound = errors.New("could not find")
@@ -12,7 +14,9 @@ type TreeNode[T comparable] struct {
 }
 
 func NewTreeNode[T comparable](val T) TreeNode[T] {
-	return TreeNode[T]{val: val, children: make([]TreeNode[T], 0)}
+  n := new(TreeNode[T])
+  n.val = val
+  return *n
 }
 
 func (n *TreeNode[T]) GetValue() T {
@@ -49,16 +53,15 @@ func (n *TreeNode[T]) GetNode(val T) (error, *TreeNode[T]) {
 			return nil, found
 		}
 	}
-	return errors.New("could not find"), nil
+	return ErrorNotFound, nil
 }
 
-// removes a node and elevates its children, if any, in its place will not remove the root node
+// removes a node and elevates its children, if any, in its place. Will not remove the root node
 func (n *TreeNode[T]) RemoveNode(val T) error {
 	for i, child := range n.children {
 		if err := child.RemoveNode(val); child.val == val {
 			if err != nil {
-				updatedChildren := n.children[:i]
-				updatedChildren = append(updatedChildren, child.children...)
+				updatedChildren := append(n.children[:i], child.children...)
 				updatedChildren = append(updatedChildren, n.children[i+1:]...)
 				n.children = updatedChildren
 				return nil
@@ -66,7 +69,7 @@ func (n *TreeNode[T]) RemoveNode(val T) error {
 			return err
 		}
 	}
-	return errors.New("could not find")
+	return ErrorNotFound
 }
 
 func (n *TreeNode[T]) RemoveBranchByNode(val T) error {
@@ -80,3 +83,20 @@ func (n *TreeNode[T]) RemoveBranchByNode(val T) error {
 	}
 	return ErrorNotFound
 }
+
+type indentCount struct {
+	count int
+}
+
+func (n *TreeNode[T]) printWithCount(count int) {
+  indent := strings.Repeat(" ", count*2)
+  fmt.Println(indent, n.val)
+  for _, child := range n.children {
+    child.printWithCount(count + 1)
+  }
+}
+
+func (n *TreeNode[T]) Print() {
+  n.printWithCount(0)
+}
+

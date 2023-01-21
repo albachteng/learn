@@ -130,6 +130,14 @@ func TestRemoveBranchByNode(t *testing.T) {
   })
 }
 
+func TestPrint(t *testing.T) {
+		n := NewTreeNode(0)
+		n.AddChild(1)
+		n.AddChild(2)
+		n.children[0].AddChild(3)
+    n.Print()
+}
+
 func assertEqual(t testing.TB, want, got int) {
 	if got != want {
 		t.Errorf("wanted %d, got %d", want, got)
