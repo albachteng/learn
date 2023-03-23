@@ -1,0 +1,119 @@
+package store
+
+import (
+	"bufio"
+	"bytes"
+	"errors"
+	"os"
+	"strings"
+)
+
+type Segment struct {
+	filename string          // formatted off the store's basename
+	hash     map[string]uint // key -> byte offset of current segment
+	len      uint            // current length in bytes
+	lim      uint            // maximum length before a new segment must be made
+}
+
+// assumes formatted name already handled
+func newSegment(segmentName string, lim uint) (*Segment, error) {
+	f, err := os.Create(segmentName)
+	if err != nil {
+		return nil, err
+	}
+	f.Close()
+	return &Segment{
+		filename: segmentName,
+		hash:     make(map[string]uint),
+		len:      0,
+		lim:      lim,
+	}, nil
+}
+
+// relies on Store to call it only when there will be space according to the len and lim
+func (s *Segment) set(key, line string) error {
+	f, err := os.OpenFile(s.filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModeAppend)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	entry := s.setHash(key, line)
+	_, err = f.Write(entry)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Segment) setHash(key, line string) []byte {
+	entry := []byte(key + line + "\n")
+	size := len(entry)
+	if size < 0 {
+		panic("entry index is negative, all hope is lost")
+	}
+	s.hash[key] = s.len
+	s.len += uint(size)
+	return entry
+}
+
+func (s *Segment) get(key string) (string, error) {
+	f, err := os.Open(s.filename)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	// set seek
+	var val string
+	scanner := bufio.NewScanner(f)
+	if offset, ok := s.hash[key]; !ok {
+		return "", ErrorNotFound
+	} else {
+		_, err = f.Seek(int64(offset), 0)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// scan and trim line
+	scanner.Scan()
+	line := scanner.Text()
+	val = strings.TrimPrefix(line, key)
+	err = scanner.Err()
+	if err != nil {
+		return "", err
+	}
+	if val != "" {
+		return val, nil
+	}
+	return "", ErrorNotFound
+}
+
+// segment compaction removes duplicate keys, leaving behind only the latest
+func (s *Segment) compaction() error {
+	var b bytes.Buffer
+	var newLen uint
+	newHash := make(map[string]uint)
+	for key := range s.hash {
+		val, err := s.get(key)
+		if err != nil && !errors.Is(err, ErrorNotFound) {
+			return err
+		}
+		entry := key + val + "\n"
+		newHash[key] = newLen
+		newLen += uint(len(entry))
+		b.WriteString(entry)
+	}
+	f, err := os.Create(s.filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write(b.Bytes())
+	if err != nil {
+		return err
+	}
+	s.hash = newHash
+	s.len = newLen
+	return nil
+}
