@@ -4,20 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 )
 
 var ErrorNotFound = errors.New("not found")
 
 type Store struct {
 	basename string     // base name of the segment files
-	len      uint       // number of segments currently written to
-	lim      uint       // maximum length in bytes of each segment
+	len      int        // number of segments currently written to
+	lim      int        // maximum length in bytes of each segment
 	segments []*Segment // pointers to all segments
 }
 
-func NewStore(basename string, lim uint) (*Store, error) {
+func NewStore(basename string, lim int) (*Store, error) {
 	segments := make([]*Segment, 0)
 	segmentName := formatSegmentName(basename, 0)
 	initialSegment, err := newSegment(segmentName, lim)
@@ -36,7 +34,7 @@ func NewStore(basename string, lim uint) (*Store, error) {
 func (s *Store) Set(key, line string) error {
 	currentSegment := s.segments[s.len-1]
 	entryLen := len(key + line + "\n")
-	if currentSegment.len+uint(entryLen) > currentSegment.lim {
+	if currentSegment.len+entryLen > currentSegment.lim {
 		err := s.addNewSegment()
 		if err != nil {
 			return err
@@ -95,11 +93,7 @@ func (s *Store) Compaction() error {
 // the merge function combines neighbor segments
 // it does not touch the final segment
 func (s *Store) Merge() error {
-	i, err := s.getLowestSegmentIndex()
-	if err != nil {
-		return err
-	}
-	for ; uint(i) < s.len-1; i++ {
+	for i := 0; int(i) < s.len-1; i++ {
 		curr := s.segments[i]
 		next := s.segments[i+1]
 		err := s.mergeSegments(curr, next)
@@ -107,7 +101,7 @@ func (s *Store) Merge() error {
 			return err
 		}
 		// is this better handled by mergeSegments?
-		err = s.deleteSegment(uint(i))
+		err = s.deleteSegment(i)
 		if err != nil {
 			return err
 		}
@@ -133,7 +127,7 @@ func (s *Store) mergeSegments(curr, next *Segment) error {
 }
 
 // delete removes the file, decrements the length and updates the segments slice
-func (s *Store) deleteSegment(i uint) error {
+func (s *Store) deleteSegment(i int) error {
 	segmentToDelete := s.segments[i]
 	err := os.Remove(segmentToDelete.filename)
 	if err != nil {
@@ -141,19 +135,25 @@ func (s *Store) deleteSegment(i uint) error {
 	}
 	s.len--
 	s.segments = append(s.segments[:i], s.segments[i+1:]...)
+	err = s.updateSegmentNames()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func formatSegmentName(basename string, len uint) string {
-	return fmt.Sprintf(basename+"-%d.txt", len)
+func (s *Store) updateSegmentNames() error {
+	for i, segment := range s.segments {
+		newName := formatSegmentName(s.basename, i)
+		err := os.Rename(segment.filename, newName)
+		if err != nil {
+			return err
+		}
+		segment.filename = newName
+	}
+	return nil
 }
 
-func (s *Store) getLowestSegmentIndex() (int, error) {
-	withoutPrefix := strings.TrimPrefix(s.segments[0].filename, s.basename+"-")
-	withoutSuffix := strings.TrimSuffix(withoutPrefix, ".txt")
-	i, err := strconv.Atoi(withoutSuffix)
-	if err != nil {
-		return 0, err
-	}
-	return i, nil
+func formatSegmentName(basename string, len int) string {
+	return fmt.Sprintf(basename+"-%d.txt", len)
 }

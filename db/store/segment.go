@@ -9,14 +9,14 @@ import (
 )
 
 type Segment struct {
-	filename string          // formatted off the store's basename
-	hash     map[string]uint // key -> byte offset of current segment
-	len      uint            // current length in bytes
-	lim      uint            // maximum length before a new segment must be made
+	filename string         // formatted off the store's basename
+	hash     map[string]int // key -> byte offset of current segment
+	len      int            // current length in bytes
+	lim      int            // maximum length before a new segment must be made
 }
 
 // assumes formatted name already handled
-func newSegment(segmentName string, lim uint) (*Segment, error) {
+func newSegment(segmentName string, lim int) (*Segment, error) {
 	f, err := os.Create(segmentName)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func newSegment(segmentName string, lim uint) (*Segment, error) {
 	f.Close()
 	return &Segment{
 		filename: segmentName,
-		hash:     make(map[string]uint),
+		hash:     make(map[string]int),
 		len:      0,
 		lim:      lim,
 	}, nil
@@ -52,7 +52,7 @@ func (s *Segment) setHash(key, line string) []byte {
 		panic("entry index is negative, all hope is lost")
 	}
 	s.hash[key] = s.len
-	s.len += uint(size)
+	s.len += int(size)
 	return entry
 }
 
@@ -92,8 +92,8 @@ func (s *Segment) get(key string) (string, error) {
 // segment compaction removes duplicate keys, leaving behind only the latest
 func (s *Segment) compaction() error {
 	var b bytes.Buffer
-	var newLen uint
-	newHash := make(map[string]uint)
+	var newLen int
+	newHash := make(map[string]int)
 	for key := range s.hash {
 		val, err := s.get(key)
 		if err != nil && !errors.Is(err, ErrorNotFound) {
@@ -101,7 +101,7 @@ func (s *Segment) compaction() error {
 		}
 		entry := key + val + "\n"
 		newHash[key] = newLen
-		newLen += uint(len(entry))
+		newLen += int(len(entry))
 		b.WriteString(entry)
 	}
 	f, err := os.Create(s.filename)

@@ -60,7 +60,6 @@ func setup() {
 
 func teardown() {
 	fmt.Println("running teardown...")
-
 	for i := 0; i < int(store.len); i++ {
 		if err := os.Remove(fmt.Sprintf("test-%d.txt", i)); err != nil {
 			continue
