@@ -52,7 +52,7 @@ func (s *Segment) setHash(key, line string) []byte {
 		panic("entry index is negative, all hope is lost")
 	}
 	s.hash[key] = s.len
-	s.len += int(size)
+	s.len += size
 	return entry
 }
 
@@ -101,7 +101,7 @@ func (s *Segment) compaction() error {
 		}
 		entry := key + val + "\n"
 		newHash[key] = newLen
-		newLen += int(len(entry))
+		newLen += len(entry)
 		b.WriteString(entry)
 	}
 	f, err := os.Create(s.filename)

@@ -93,7 +93,7 @@ func (s *Store) Compaction() error {
 // the merge function combines neighbor segments
 // it does not touch the final segment
 func (s *Store) Merge() error {
-	for i := 0; int(i) < s.len-1; i++ {
+	for i := 0; i < s.len-1; i++ {
 		curr := s.segments[i]
 		next := s.segments[i+1]
 		err := s.mergeSegments(curr, next)
