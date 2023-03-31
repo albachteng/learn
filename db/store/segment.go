@@ -36,24 +36,16 @@ func (s *Segment) set(key, line string) error {
 	if err != nil {
 		return err
 	}
+	entry := []byte(key + line + "\n")
+	size := len(entry)
+	s.hash[key] = s.len
+	s.len += size
 	defer f.Close()
-	entry := s.setHash(key, line)
 	_, err = f.Write(entry)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *Segment) setHash(key, line string) []byte {
-	entry := []byte(key + line + "\n")
-	size := len(entry)
-	if size < 0 {
-		panic("entry index is negative, all hope is lost")
-	}
-	s.hash[key] = s.len
-	s.len += size
-	return entry
 }
 
 func (s *Segment) get(key string) (string, error) {
