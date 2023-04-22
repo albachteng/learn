@@ -52,3 +52,17 @@ func SaveData3(path string, data []byte) error {
 	}
 	return os.Rename(tmp, path)
 }
+
+func LogCreate(path string) (*os.File, error) {
+	return os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+}
+
+func LogAppend(f *os.File, line string) error {
+	buf := []byte(line)
+	buf = append(buf, '\n')
+	_, err := f.Write(buf)
+	if err != nil {
+		return err
+	}
+	return f.Sync()
+}
