@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"time"
 )
 
@@ -27,8 +28,18 @@ func handleConn(c net.Conn) {
 	for {
 		_, err := io.WriteString(c, time.Now().Format("15:04:05\n"))
 		if err != nil {
-			return // disconnect
+			log.Println("out of loop")
+			log.Print(err)
+			return
 		}
+		go mustCopy(os.Stdout, c)
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func mustCopy(dst io.Writer, src io.Reader) {
+	if _, err := io.CopyN(dst, src, 4); err != nil {
+		log.Println("exiting through mustCopy")
+		log.Fatal(err)
 	}
 }

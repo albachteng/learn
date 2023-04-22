@@ -13,7 +13,18 @@ func main() {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-	mustCopy(os.Stdout, conn)
+	var msg []byte
+	for {
+		_, err = os.Stdin.Read(msg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = io.WriteString(conn, string(msg))
+		if err != nil {
+			log.Fatal(err)
+		}
+		go mustCopy(os.Stdout, conn)
+	}
 }
 
 func mustCopy(dst io.Writer, src io.Reader) {
